@@ -121,6 +121,12 @@ class QuizGameFlowTests(unittest.TestCase):
         self.assertEqual(self.game.best_score, 100)
         self.assertEqual(self.game.history[-1]["correct"], 1)
 
+    def test_list_quizzes_handles_empty(self):
+        self.game.quizzes = []
+        with patch("builtins.print") as mocked:
+            self.game.list_quizzes()
+        self.assertIn("등록된 퀴즈가 없습니다", mocked.call_args_list[0].args[0])
+
     def test_play_rejects_invalid_count(self):
         with self.assertRaises(ValueError):
             self.game.play(0)

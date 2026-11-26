@@ -230,6 +230,9 @@ class QuizGame:
         return score
 
     def list_quizzes(self) -> None:
+        if not self.quizzes:
+            print("\n등록된 퀴즈가 없습니다. '퀴즈 추가'로 먼저 등록하세요.")
+            return
         print(f"\n등록된 퀴즈 ({len(self.quizzes)}개)")
         for index, quiz in enumerate(self.quizzes, 1):
             print(f"{index}. {quiz.question}")
