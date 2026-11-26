@@ -55,6 +55,10 @@ DEFAULT_QUIZZES = [
 ]
 
 
+MENU_TEXT = "1. 퀴즈 풀기\n2. 퀴즈 추가\n3. 퀴즈 목록\n4. 점수 확인\n5. 퀴즈 삭제\n6. 종료"
+MENU_MAX = 6
+
+
 class QuizGame:
     def __init__(self, state_path: Path = STATE_FILE, rng: Any = None):
         self.state_path = Path(state_path)
@@ -265,8 +269,8 @@ class QuizGame:
             print("\n" + "=" * 42)
             print("       나만의 Python 퀴즈 게임")
             print("=" * 42)
-            print("1. 퀴즈 풀기\n2. 퀴즈 추가\n3. 퀴즈 목록\n4. 점수 확인\n5. 퀴즈 삭제\n6. 종료")
-            choice = self.ask_int("선택: ", 1, 6)
+            print(MENU_TEXT)
+            choice = self.ask_int("선택: ", 1, MENU_MAX)
             if choice is None:
                 self.save_state()
                 print("저장하고 종료합니다.")
