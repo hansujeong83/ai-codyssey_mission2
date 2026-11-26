@@ -229,6 +229,22 @@ class QuizGame:
         self.save_state()
         return score
 
+    def delete_quiz(self, number: int | None = None) -> bool:
+        if not self.quizzes:
+            print("삭제할 퀴즈가 없습니다.")
+            return False
+        if number is None:
+            self.list_quizzes()
+            number = self.ask_int(f"삭제할 번호 (1~{len(self.quizzes)}): ", 1, len(self.quizzes))
+        if number is None:
+            return False
+        if not 1 <= number <= len(self.quizzes):
+            raise ValueError("삭제 번호가 등록된 퀴즈 범위를 벗어났습니다.")
+        removed = self.quizzes.pop(number - 1)
+        self.save_state()
+        print(f"삭제했습니다: {removed.question}")
+        return True
+
     def list_quizzes(self) -> None:
         if not self.quizzes:
             print("\n등록된 퀴즈가 없습니다. '퀴즈 추가'로 먼저 등록하세요.")
@@ -249,8 +265,8 @@ class QuizGame:
             print("\n" + "=" * 42)
             print("       나만의 Python 퀴즈 게임")
             print("=" * 42)
-            print("1. 퀴즈 풀기\n2. 퀴즈 추가\n3. 퀴즈 목록\n4. 점수 확인\n5. 종료")
-            choice = self.ask_int("선택: ", 1, 5)
+            print("1. 퀴즈 풀기\n2. 퀴즈 추가\n3. 퀴즈 목록\n4. 점수 확인\n5. 퀴즈 삭제\n6. 종료")
+            choice = self.ask_int("선택: ", 1, 6)
             if choice is None:
                 self.save_state()
                 print("저장하고 종료합니다.")
@@ -263,6 +279,8 @@ class QuizGame:
                 self.list_quizzes()
             elif choice == 4:
                 self.show_score()
+            elif choice == 5:
+                self.delete_quiz()
             else:
                 self.save_state()
                 print("저장하고 종료합니다.")
