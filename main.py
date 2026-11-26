@@ -229,6 +229,22 @@ class QuizGame:
         self.save_state()
         return score
 
+    def delete_quiz(self, number: int | None = None) -> bool:
+        if not self.quizzes:
+            print("삭제할 퀴즈가 없습니다.")
+            return False
+        if number is None:
+            self.list_quizzes()
+            number = self.ask_int(f"삭제할 번호 (1~{len(self.quizzes)}): ", 1, len(self.quizzes))
+        if number is None:
+            return False
+        if not 1 <= number <= len(self.quizzes):
+            raise ValueError("삭제 번호가 등록된 퀴즈 범위를 벗어났습니다.")
+        removed = self.quizzes.pop(number - 1)
+        self.save_state()
+        print(f"삭제했습니다: {removed.question}")
+        return True
+
     def list_quizzes(self) -> None:
         if not self.quizzes:
             print("\n등록된 퀴즈가 없습니다. '퀴즈 추가'로 먼저 등록하세요.")
