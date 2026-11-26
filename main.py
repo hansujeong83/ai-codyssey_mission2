@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import random
+import shutil
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -55,6 +56,10 @@ DEFAULT_QUIZZES = [
 ]
 
 
+MENU_TEXT = "1. 퀴즈 풀기\n2. 퀴즈 추가\n3. 퀴즈 목록\n4. 점수 확인\n5. 퀴즈 삭제\n6. 종료"
+MENU_MAX = 6
+
+
 class QuizGame:
     def __init__(self, state_path: Path = STATE_FILE, rng: Any = None):
         self.state_path = Path(state_path)
@@ -104,6 +109,15 @@ class QuizGame:
             clean_history.append({"total": total, "correct": correct, "score": score})
         return quizzes, best_score, clean_history
 
+    def backup_corrupt_state(self) -> None:
+        """손상된 파일을 덮어쓰기 전에 state.json.corrupt.bak 으로 보존한다."""
+        backup = self.state_path.with_name(self.state_path.name + ".corrupt.bak")
+        try:
+            shutil.copy2(self.state_path, backup)
+            print(f"손상된 원본을 {backup.name} 으로 백업했습니다.")
+        except OSError as exc:
+            print(f"백업 실패(복구는 계속 진행): {exc}")
+
     def load_state(self) -> None:
         if not self.state_path.exists():
             self.save_state()
@@ -114,6 +128,7 @@ class QuizGame:
             self.quizzes, self.best_score, self.history = self.validate_state(data)
         except (OSError, UnicodeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
             print(f"저장 파일 복구: {exc}")
+            self.backup_corrupt_state()
             self.quizzes = list(DEFAULT_QUIZZES)
             self.best_score = 0
             self.history = []
@@ -229,7 +244,26 @@ class QuizGame:
         self.save_state()
         return score
 
+    def delete_quiz(self, number: int | None = None) -> bool:
+        if not self.quizzes:
+            print("삭제할 퀴즈가 없습니다.")
+            return False
+        if number is None:
+            self.list_quizzes()
+            number = self.ask_int(f"삭제할 번호 (1~{len(self.quizzes)}): ", 1, len(self.quizzes))
+        if number is None:
+            return False
+        if not 1 <= number <= len(self.quizzes):
+            raise ValueError("삭제 번호가 등록된 퀴즈 범위를 벗어났습니다.")
+        removed = self.quizzes.pop(number - 1)
+        self.save_state()
+        print(f"삭제했습니다: {removed.question}")
+        return True
+
     def list_quizzes(self) -> None:
+        if not self.quizzes:
+            print("\n등록된 퀴즈가 없습니다. '퀴즈 추가'로 먼저 등록하세요.")
+            return
         print(f"\n등록된 퀴즈 ({len(self.quizzes)}개)")
         for index, quiz in enumerate(self.quizzes, 1):
             print(f"{index}. {quiz.question}")
@@ -246,8 +280,8 @@ class QuizGame:
             print("\n" + "=" * 42)
             print("       나만의 Python 퀴즈 게임")
             print("=" * 42)
-            print("1. 퀴즈 풀기\n2. 퀴즈 추가\n3. 퀴즈 목록\n4. 점수 확인\n5. 종료")
-            choice = self.ask_int("선택: ", 1, 5)
+            print(MENU_TEXT)
+            choice = self.ask_int("선택: ", 1, MENU_MAX)
             if choice is None:
                 self.save_state()
                 print("저장하고 종료합니다.")
@@ -260,6 +294,8 @@ class QuizGame:
                 self.list_quizzes()
             elif choice == 4:
                 self.show_score()
+            elif choice == 5:
+                self.delete_quiz()
             else:
                 self.save_state()
                 print("저장하고 종료합니다.")

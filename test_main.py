@@ -69,6 +69,14 @@ class QuizGamePersistenceTests(unittest.TestCase):
         self.assertEqual(len(game.quizzes), len(DEFAULT_QUIZZES))
         self.assertEqual(json.loads(self.path.read_text())["best_score"], 0)
 
+    def test_corrupt_json_is_backed_up(self):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text("{broken", encoding="utf-8")
+        with patch("builtins.print"):
+            QuizGame(self.path)
+        backup = self.path.with_name(self.path.name + ".corrupt.bak")
+        self.assertEqual(backup.read_text(encoding="utf-8"), "{broken")
+
     def test_non_object_json_recovers_defaults(self):
         self.path.parent.mkdir(parents=True)
         self.path.write_text("[]", encoding="utf-8")
@@ -120,6 +128,33 @@ class QuizGameFlowTests(unittest.TestCase):
         self.assertEqual(score, 100)
         self.assertEqual(self.game.best_score, 100)
         self.assertEqual(self.game.history[-1]["correct"], 1)
+
+    def test_delete_quiz_removes_and_persists(self):
+        before = len(self.game.quizzes)
+        removed = self.game.quizzes[0].question
+        with patch("builtins.input", side_effect=["1"]):
+            self.assertTrue(self.game.delete_quiz())
+        self.assertEqual(len(self.game.quizzes), before - 1)
+        reloaded = QuizGame(self.path)
+        self.assertNotIn(removed, [q.question for q in reloaded.quizzes])
+
+    def test_delete_quiz_empty_and_invalid(self):
+        with self.assertRaises(ValueError):
+            self.game.delete_quiz(999)
+        self.game.quizzes = []
+        self.assertFalse(self.game.delete_quiz())
+
+    def test_delete_quiz_cancelled_on_eof(self):
+        before = len(self.game.quizzes)
+        with patch("builtins.input", side_effect=EOFError):
+            self.assertFalse(self.game.delete_quiz())
+        self.assertEqual(len(self.game.quizzes), before)
+
+    def test_list_quizzes_handles_empty(self):
+        self.game.quizzes = []
+        with patch("builtins.print") as mocked:
+            self.game.list_quizzes()
+        self.assertIn("등록된 퀴즈가 없습니다", mocked.call_args_list[0].args[0])
 
     def test_play_rejects_invalid_count(self):
         with self.assertRaises(ValueError):
