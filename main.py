@@ -265,8 +265,8 @@ class QuizGame:
             print("\n" + "=" * 42)
             print("       나만의 Python 퀴즈 게임")
             print("=" * 42)
-            print("1. 퀴즈 풀기\n2. 퀴즈 추가\n3. 퀴즈 목록\n4. 점수 확인\n5. 종료")
-            choice = self.ask_int("선택: ", 1, 5)
+            print("1. 퀴즈 풀기\n2. 퀴즈 추가\n3. 퀴즈 목록\n4. 점수 확인\n5. 퀴즈 삭제\n6. 종료")
+            choice = self.ask_int("선택: ", 1, 6)
             if choice is None:
                 self.save_state()
                 print("저장하고 종료합니다.")
@@ -279,6 +279,8 @@ class QuizGame:
                 self.list_quizzes()
             elif choice == 4:
                 self.show_score()
+            elif choice == 5:
+                self.delete_quiz()
             else:
                 self.save_state()
                 print("저장하고 종료합니다.")
