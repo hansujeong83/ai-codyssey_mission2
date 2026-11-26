@@ -121,6 +121,27 @@ class QuizGameFlowTests(unittest.TestCase):
         self.assertEqual(self.game.best_score, 100)
         self.assertEqual(self.game.history[-1]["correct"], 1)
 
+    def test_delete_quiz_removes_and_persists(self):
+        before = len(self.game.quizzes)
+        removed = self.game.quizzes[0].question
+        with patch("builtins.input", side_effect=["1"]):
+            self.assertTrue(self.game.delete_quiz())
+        self.assertEqual(len(self.game.quizzes), before - 1)
+        reloaded = QuizGame(self.path)
+        self.assertNotIn(removed, [q.question for q in reloaded.quizzes])
+
+    def test_delete_quiz_empty_and_invalid(self):
+        with self.assertRaises(ValueError):
+            self.game.delete_quiz(999)
+        self.game.quizzes = []
+        self.assertFalse(self.game.delete_quiz())
+
+    def test_delete_quiz_cancelled_on_eof(self):
+        before = len(self.game.quizzes)
+        with patch("builtins.input", side_effect=EOFError):
+            self.assertFalse(self.game.delete_quiz())
+        self.assertEqual(len(self.game.quizzes), before)
+
     def test_list_quizzes_handles_empty(self):
         self.game.quizzes = []
         with patch("builtins.print") as mocked:
