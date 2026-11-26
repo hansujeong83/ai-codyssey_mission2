@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import random
+import shutil
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -108,6 +109,15 @@ class QuizGame:
             clean_history.append({"total": total, "correct": correct, "score": score})
         return quizzes, best_score, clean_history
 
+    def backup_corrupt_state(self) -> None:
+        """손상된 파일을 덮어쓰기 전에 state.json.corrupt.bak 으로 보존한다."""
+        backup = self.state_path.with_name(self.state_path.name + ".corrupt.bak")
+        try:
+            shutil.copy2(self.state_path, backup)
+            print(f"손상된 원본을 {backup.name} 으로 백업했습니다.")
+        except OSError as exc:
+            print(f"백업 실패(복구는 계속 진행): {exc}")
+
     def load_state(self) -> None:
         if not self.state_path.exists():
             self.save_state()
@@ -118,6 +128,7 @@ class QuizGame:
             self.quizzes, self.best_score, self.history = self.validate_state(data)
         except (OSError, UnicodeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
             print(f"저장 파일 복구: {exc}")
+            self.backup_corrupt_state()
             self.quizzes = list(DEFAULT_QUIZZES)
             self.best_score = 0
             self.history = []

@@ -69,6 +69,14 @@ class QuizGamePersistenceTests(unittest.TestCase):
         self.assertEqual(len(game.quizzes), len(DEFAULT_QUIZZES))
         self.assertEqual(json.loads(self.path.read_text())["best_score"], 0)
 
+    def test_corrupt_json_is_backed_up(self):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text("{broken", encoding="utf-8")
+        with patch("builtins.print"):
+            QuizGame(self.path)
+        backup = self.path.with_name(self.path.name + ".corrupt.bak")
+        self.assertEqual(backup.read_text(encoding="utf-8"), "{broken")
+
     def test_non_object_json_recovers_defaults(self):
         self.path.parent.mkdir(parents=True)
         self.path.write_text("[]", encoding="utf-8")

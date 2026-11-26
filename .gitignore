@@ -7,3 +7,4 @@ state.json.tmp
 .venv/
 venv/
 .env
+state.json.corrupt.bak
